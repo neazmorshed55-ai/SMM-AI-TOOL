@@ -16,7 +16,8 @@ import {
   X,
   ChevronRight,
   LogOut,
-  Github
+  Github,
+  AlertTriangle
 } from 'lucide-react';
 
 import Dashboard from './components/Dashboard';
@@ -236,6 +237,51 @@ function SettingsPage() {
           >
             {saveStatus ? 'সফলভাবে সেভ হয়েছে!' : 'সেভ করুন'}
           </button>
+        </div>
+
+        <div className="bg-white p-8 rounded-[2.5rem] border border-blue-100 shadow-sm space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center">
+              <Github className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-brand-navy">Vercel & GitHub Connection Guide</h2>
+              <p className="text-sm text-slate-500">আপনার প্রজেক্টটি লাইভ করার জন্য নিচের ধাপগুলো অনুসরণ করুন।</p>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="flex gap-4">
+              <div className="flex-none w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">১</div>
+              <div className="text-sm text-slate-600">
+                <p className="font-bold text-brand-navy">Export to GitHub:</p>
+                AI Studio-র উপরের সেটিং মেনু থেকে <span className="font-mono bg-slate-100 px-1 rounded">Export to GitHub</span> বাটনে ক্লিক করে আপনার <span className="font-bold">SMM-AI-TOOL</span> রিপোজিটরিতে কোড পুশ করুন।
+              </div>
+            </div>
+            
+            <div className="flex gap-4">
+              <div className="flex-none w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">২</div>
+              <div className="text-sm text-slate-600">
+                <p className="font-bold text-brand-navy">Configure Vercel:</p>
+                <a href="https://vercel.com/new" target="_blank" rel="noreferrer" className="text-blue-600 underline">vercel.com/new</a>-এ যান এবং আপনার GitHub রিপোজিটি নির্বাচন করুন।
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <div className="flex-none w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">৩</div>
+              <div className="text-sm text-slate-600">
+                <p className="font-bold text-brand-navy">Environment Variables:</p>
+                Vercel Dashboard-এ <span className="font-bold">Environmental Variables</span> সেকশনে <span className="font-mono">GEMINI_API_KEY</span> এবং <span className="font-mono">RESEND_API_KEY</span> যুক্ত করুন।
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-start gap-3">
+             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+             <p className="text-xs text-amber-700 leading-relaxed">
+               <span className="font-bold">সতর্কতা:</span> আমি আপনার GitHub-এ সরাসরি কানেক্ট করতে পারছি না। আপনি AI Studio থেকে কোড এক্সপোর্ট করার পর ভার্সেলে ইমপোর্ট করলেই সব ঠিক হয়ে যাবে।
+             </p>
+          </div>
         </div>
 
         <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-xl flex flex-col justify-between">
