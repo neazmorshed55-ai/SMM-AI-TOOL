@@ -94,10 +94,30 @@ export default function SocialModule() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <button className="py-4 bg-brand-navy text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-md">
+                  <button 
+                    onClick={() => {
+                        if(!postContent) return;
+                        setIsGenerating(true);
+                        setTimeout(() => {
+                            setIsGenerating(false);
+                            alert("Facebook-এ পোস্ট করা হয়েছে (Simulated)");
+                        }, 2000);
+                    }}
+                    className="py-4 bg-brand-navy text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-md active:scale-95"
+                  >
                     <Facebook className="w-5 h-5 text-blue-400" /> Facebook পেজে পোস্ট দিন
                   </button>
-                  <button className="py-4 bg-brand-navy text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-md">
+                  <button 
+                    onClick={() => {
+                        if(!postContent) return;
+                        setIsGenerating(true);
+                        setTimeout(() => {
+                            setIsGenerating(false);
+                            alert("Instagram-এ পোস্ট করা হয়েছে (Simulated)");
+                        }, 2000);
+                    }}
+                    className="py-4 bg-brand-navy text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-md active:scale-95"
+                  >
                     <Instagram className="w-5 h-5 text-pink-400" /> Instagram-এ পোস্ট দিন
                   </button>
                 </div>

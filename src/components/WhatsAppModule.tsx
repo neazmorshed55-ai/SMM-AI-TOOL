@@ -3,16 +3,78 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
-import { motion } from 'motion/react';
-import { Shield, Clock, Send, AlertCircle, Plus, Trash2, Info } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Shield, Clock, Send, AlertCircle, Trash2, Info, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useAuth } from '../FirebaseProvider';
 
 export default function WhatsAppModule() {
+  const { user } = useAuth();
   const [warmupDays, setWarmupDays] = useState(1);
   const [message, setMessage] = useState('');
   const [contacts, setContacts] = useState('');
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [sentCount, setSentCount] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   
   const dailyLimit = warmupDays * 10 + 5;
+
+  const handleBroadcast = async () => {
+    if (!contacts.trim() || !message.trim()) {
+      setError('দয়া করে কন্টাক্ট এবং মেসেজ উভয়ই প্রদান করুন।');
+      return;
+    }
+
+    const contactList = contacts.split('\n').filter(c => c.trim().length > 0);
+    if (contactList.length === 0) return;
+
+    setIsBroadcasting(true);
+    setProgress(0);
+    setSentCount(0);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      // Create campaign record in Firestore
+      if (user) {
+        await addDoc(collection(db, 'campaigns'), {
+          name: `WhatsApp Broadcast ${new Date().toLocaleDateString()}`,
+          type: 'whatsapp',
+          status: 'running',
+          stats: {
+            sent: 0,
+            failed: 0,
+            total: contactList.length
+          },
+          ownerId: user.uid,
+          createdAt: serverTimestamp()
+        });
+      }
+
+      // Simulate broadcast sequence
+      for (let i = 0; i < contactList.length; i++) {
+        // Random delay simulation (Safe Sending)
+        const delay = Math.floor(Math.random() * 2000) + 1000;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
+        setSentCount(prev => prev + 1);
+        setProgress(Math.round(((i + 1) / contactList.length) * 100));
+      }
+
+      setSuccess(true);
+      // Clear inputs on success maybe? Or keep them. 
+    } catch (err) {
+      console.error(err);
+      setError('ব্রডকাস্টিং শুরু করতে সমস্যা হয়েছে।');
+      handleFirestoreError(err, OperationType.CREATE, 'campaigns');
+    } finally {
+      setIsBroadcasting(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -25,12 +87,53 @@ export default function WhatsAppModule() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6">
+          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm space-y-6 relative overflow-hidden">
+            <AnimatePresence>
+              {isBroadcasting && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-white/90 backdrop-blur-sm z-20 flex flex-col items-center justify-center p-12 text-center"
+                >
+                  <div className="relative w-32 h-32 mb-8">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle
+                        cx="64" cy="64" r="58"
+                        stroke="currentColor"
+                        strokeWidth="8"
+                        fill="transparent"
+                        className="text-slate-100"
+                      />
+                      <motion.circle
+                        cx="64" cy="64" r="58"
+                        stroke="currentColor"
+                        strokeWidth="8"
+                        fill="transparent"
+                        strokeDasharray="364.4"
+                        initial={{ strokeDashoffset: 364.4 }}
+                        animate={{ strokeDashoffset: 364.4 - (364.4 * progress) / 100 }}
+                        className="text-brand-gold"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center flex-col">
+                      <span className="text-2xl font-black text-brand-navy">{progress}%</span>
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-bold text-brand-navy mb-2">মেসেজ পাঠানো হচ্ছে...</h3>
+                  <p className="text-slate-500 font-medium">ডেলিভারি স্ট্যাটাস: {sentCount} / {contacts.split('\n').filter(c => c.trim()).length}</p>
+                  <div className="mt-8 flex items-center gap-2 text-amber-600 bg-amber-50 px-4 py-2 rounded-xl text-xs font-bold">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Do not close this tab
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div className="space-y-2">
               <label className="text-sm font-bold text-brand-navy">কন্টাক্ট লিস্ট (প্রতিটি নতুন লাইনে একটি নম্বর)</label>
               <textarea 
                 placeholder="8801700000000&#10;8801800000000"
-                className="w-full h-40 p-4 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-2 focus:ring-brand-gold outline-none transition-all"
+                className="w-full h-40 p-4 rounded-2xl bg-slate-50 border border-slate-100 focus:ring-2 focus:ring-brand-gold outline-none transition-all font-mono text-sm"
                 value={contacts}
                 onChange={(e) => setContacts(e.target.value)}
               />
@@ -54,11 +157,30 @@ export default function WhatsAppModule() {
               />
             </div>
 
+            {error && (
+              <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-2xl text-red-700 text-sm font-bold">
+                <XCircle className="w-5 h-5" /> {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-100 rounded-2xl text-green-700 text-sm font-bold">
+                <CheckCircle2 className="w-5 h-5" /> ব্রডকাস্ট সাকসেসফুলি সম্পন্ন হয়েছে!
+              </div>
+            )}
+
             <div className="flex gap-4">
-              <button className="flex-1 bg-brand-navy text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 shadow-lg active:scale-95 transition-all">
+              <button 
+                onClick={handleBroadcast}
+                disabled={isBroadcasting}
+                className="flex-1 bg-brand-navy text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-slate-800 shadow-lg active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <Send className="w-5 h-5 text-brand-gold" /> ব্রডকাস্ট শুরু করুন
               </button>
-              <button className="px-6 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all">
+              <button 
+                onClick={() => { setContacts(''); setMessage(''); setError(null); setSuccess(false); }}
+                className="px-6 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all"
+              >
                 <Trash2 className="w-5 h-5 text-slate-400" />
               </button>
             </div>
