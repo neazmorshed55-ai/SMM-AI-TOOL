@@ -193,10 +193,12 @@ export default function App() {
 
 function SettingsPage() {
   const [resendKey, setResendKey] = useState(localStorage.getItem('RESEND_API_KEY') || '');
+  const [geminiKey, setGeminiKey] = useState(localStorage.getItem('VITE_GEMINI_API_KEY') || '');
   const [saveStatus, setSaveStatus] = useState(false);
 
   const saveSettings = () => {
     localStorage.setItem('RESEND_API_KEY', resendKey);
+    localStorage.setItem('VITE_GEMINI_API_KEY', geminiKey);
     setSaveStatus(true);
     setTimeout(() => setSaveStatus(false), 2000);
   };
@@ -216,9 +218,14 @@ function SettingsPage() {
           <div className="space-y-4">
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-500 uppercase">Gemini API Key</label>
-              <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl text-slate-400 text-sm italic">
-                 AI Studio-র মাধ্যমে স্বয়ংক্রিয়ভাবে যুক্ত আছে।
-              </div>
+              <input 
+                type="password" 
+                placeholder="AI Studio-র বাইরের ব্যবহারের জন্য..." 
+                className="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-brand-gold outline-none" 
+                value={geminiKey}
+                onChange={(e) => setGeminiKey(e.target.value)}
+              />
+              <p className="text-[10px] text-slate-400">এই এনভায়রনমেন্টে Gemini কী অটো-সেট করা আছে। ভার্সেল বা লোকাল-এ চালানোর জন্য দরকার হতে পারে।</p>
             </div>
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-500 uppercase">Resend API Key</label>
