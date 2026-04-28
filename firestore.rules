@@ -1,0 +1,86 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(existingData) {
+      return isSignedIn() && existingData.ownerId == request.auth.uid;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- Entity Validations ---
+    function isValidContact(data) {
+      return data.keys().hasAll(['phone', 'ownerId', 'createdAt'])
+        && data.keys().size() <= 8
+        && data.phone is string && data.phone.size() <= 20
+        && data.ownerId == request.auth.uid
+        && data.createdAt == request.time
+        && (!('email' in data) || (data.email is string && data.email.size() <= 100))
+        && (!('name' in data) || (data.name is string && data.name.size() <= 100));
+    }
+
+    function isValidTemplate(data) {
+      return data.keys().hasAll(['name', 'content', 'type', 'ownerId', 'createdAt'])
+        && data.keys().size() == 5
+        && data.name is string && data.name.size() <= 100
+        && data.content is string && data.content.size() <= 5000
+        && data.type in ['whatsapp', 'email', 'social']
+        && data.ownerId == request.auth.uid
+        && data.createdAt == request.time;
+    }
+
+    function isValidCampaign(data) {
+      return data.keys().hasAll(['name', 'type', 'status', 'ownerId', 'createdAt'])
+        && data.keys().size() <= 7
+        && data.name is string && data.name.size() <= 100
+        && data.type in ['whatsapp', 'email']
+        && data.status in ['pending', 'running', 'completed', 'failed']
+        && data.ownerId == request.auth.uid
+        && data.createdAt == request.time;
+    }
+
+    // --- Match Blocks ---
+
+    match /contacts/{contactId} {
+      allow get: if isOwner(resource.data);
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isVerified() && isValidContact(request.resource.data);
+      allow update: if isVerified() && isOwner(resource.data) && isValidContact(request.resource.data)
+        && request.resource.data.ownerId == resource.data.ownerId;
+      allow delete: if isOwner(resource.data);
+    }
+
+    match /templates/{templateId} {
+      allow get: if isOwner(resource.data);
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isVerified() && isValidTemplate(request.resource.data);
+      allow update: if isVerified() && isOwner(resource.data) && isValidTemplate(request.resource.data)
+        && request.resource.data.ownerId == resource.data.ownerId;
+      allow delete: if isOwner(resource.data);
+    }
+
+    match /campaigns/{campaignId} {
+      allow get: if isOwner(resource.data);
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isVerified() && isValidCampaign(request.resource.data);
+      allow update: if isVerified() && isOwner(resource.data) && isValidCampaign(request.resource.data)
+        && request.resource.data.ownerId == resource.data.ownerId;
+      allow delete: if isOwner(resource.data);
+    }
+  }
+}

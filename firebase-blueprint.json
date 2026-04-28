@@ -1,0 +1,66 @@
+{
+  "entities": {
+    "Contact": {
+      "title": "Contact",
+      "description": "Recipient information for broadcasting",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Display name" },
+        "phone": { "type": "string", "description": "WhatsApp number in international format" },
+        "email": { "type": "string", "description": "Email address" },
+        "tags": { "type": "array", "items": { "type": "string" }, "description": "Categorization tags" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of creation" },
+        "ownerId": { "type": "string", "description": "UID of the user who owns this contact" }
+      },
+      "required": ["phone", "ownerId", "createdAt"]
+    },
+    "Template": {
+      "title": "Message Template",
+      "description": "Reusable message content",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string", "enum": ["whatsapp", "email", "social"] },
+        "ownerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "content", "type", "ownerId", "createdAt"]
+    },
+    "Campaign": {
+      "title": "Campaign",
+      "description": "A broadcast campaign status and logs",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["whatsapp", "email"] },
+        "status": { "type": "string", "enum": ["pending", "running", "completed", "failed"] },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "sent": { "type": "number" },
+            "failed": { "type": "number" },
+            "total": { "type": "number" }
+          }
+        },
+        "ownerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "type", "status", "ownerId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/contacts/{contactId}": {
+      "schema": "Contact",
+      "description": "Global list of contacts"
+    },
+    "/templates/{templateId}": {
+      "schema": "Template",
+      "description": "Saved message templates"
+    },
+    "/campaigns/{campaignId}": {
+      "schema": "Campaign",
+      "description": "History of broadcast campaigns"
+    }
+  }
+}
