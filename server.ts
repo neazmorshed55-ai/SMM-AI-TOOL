@@ -57,7 +57,9 @@ setupMiddleware();
 
 export default app;
 
-if (process.env.NODE_ENV !== "production") {
+// Ensure server listens in production (Cloud Run)
+// Vercel handles the export default app automatically
+if (!process.env.VERCEL) {
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
